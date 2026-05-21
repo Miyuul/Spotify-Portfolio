@@ -323,18 +323,41 @@ with tab_history:
 
     if rows:
         st.divider()
-        st.subheader("Plays by hour of day")
+        st.subheader("Listening by time of day")
         hours = pd.to_datetime([it["played_at"] for it in items]).hour
-        hdf = (
-            pd.Series(hours, name="hour")
-            .value_counts()
-            .rename_axis("hour")
-            .reset_index(name="plays")
-            .sort_values("hour")
-        )
-        fig3 = px.bar(
-            hdf, x="hour", y="plays",
-            labels={"hour": "Hour of Day", "plays": "Plays"},
-            color_discrete_sequence=["#1DB954"],
+
+        # One bar per hour; fill hours with no plays as 0
+        play_counts = pd.Series(0, index=range(24))
+        play_counts.update(pd.Series(list(hours)).value_counts())
+
+        hour_labels = [
+            "12am", "1am", "2am", "3am", "4am", "5am",
+            "6am",  "7am", "8am", "9am", "10am", "11am",
+            "12pm", "1pm", "2pm", "3pm", "4pm", "5pm",
+            "6pm",  "7pm", "8pm", "9pm", "10pm", "11pm",
+        ]
+
+        fig3 = go.Figure(go.Barpolar(
+            r=play_counts.values,
+            theta=[h * 15 for h in range(24)],
+            width=[15] * 24,
+            marker_color="#1DB954",
+            marker_line_color="rgba(0,0,0,0)",
+            opacity=0.85,
+            hovertemplate="%{text}: %{r} plays<extra></extra>",
+            text=hour_labels,
+        ))
+        fig3.update_layout(
+            polar=dict(
+                radialaxis=dict(visible=False),
+                angularaxis=dict(
+                    tickvals=[h * 15 for h in range(24)],
+                    ticktext=hour_labels,
+                    direction="clockwise",
+                    rotation=90,
+                ),
+            ),
+            showlegend=False,
+            margin=dict(l=60, r=60, t=20, b=20),
         )
         st.plotly_chart(fig3, use_container_width=True)

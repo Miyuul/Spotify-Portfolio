@@ -1,0 +1,23 @@
+# Secrets & auth cache
+.env
+.cache
+
+# Data — DuckDB file and raw API cache; .gitkeep keeps the folder tracked
+data/**
+!data/.gitkeep
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+
+# IDE
+.vscode/
+.idea/
+*.swp

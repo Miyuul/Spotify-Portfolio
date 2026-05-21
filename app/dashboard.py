@@ -28,6 +28,15 @@ from spotipy.oauth2 import SpotifyOAuth
 
 load_dotenv()
 
+
+def _secret(key: str) -> str:
+    """Read from st.secrets (Streamlit Cloud) with fallback to os.environ (local)."""
+    try:
+        return st.secrets[key]
+    except (KeyError, FileNotFoundError):
+        return os.environ.get(key, "")
+
+
 _SCOPES = " ".join([
     "user-top-read",
     "user-library-read",
@@ -51,20 +60,26 @@ _AUDIO_FEATURES = [
 # ---------------------------------------------------------------------------
 
 def _make_auth_manager() -> SpotifyOAuth:
-    missing = [
-        v for v in ("SPOTIPY_CLIENT_ID", "SPOTIPY_CLIENT_SECRET", "SPOTIPY_REDIRECT_URI")
-        if not os.environ.get(v)
-    ]
+    client_id     = _secret("SPOTIPY_CLIENT_ID")
+    client_secret = _secret("SPOTIPY_CLIENT_SECRET")
+    redirect_uri  = _secret("SPOTIPY_REDIRECT_URI")
+
+    missing = [k for k, v in [
+        ("SPOTIPY_CLIENT_ID", client_id),
+        ("SPOTIPY_CLIENT_SECRET", client_secret),
+        ("SPOTIPY_REDIRECT_URI", redirect_uri),
+    ] if not v]
     if missing:
         st.error(
-            f"Missing environment variable(s): {', '.join(missing)}. "
-            "Add them to your `.env` file and restart the app."
+            f"Missing secret(s): {', '.join(missing)}. "
+            "Add them in Streamlit Cloud → app Settings → Secrets."
         )
         st.stop()
+
     return SpotifyOAuth(
-        client_id=os.environ["SPOTIPY_CLIENT_ID"],
-        client_secret=os.environ["SPOTIPY_CLIENT_SECRET"],
-        redirect_uri=os.environ["SPOTIPY_REDIRECT_URI"],
+        client_id=client_id,
+        client_secret=client_secret,
+        redirect_uri=redirect_uri,
         scope=_SCOPES,
         cache_path=None,
         show_dialog=False,
